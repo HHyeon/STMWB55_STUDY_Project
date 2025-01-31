@@ -30,6 +30,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "printf_remapping.h"
+#include "ble.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +63,13 @@ void PeriphCommonClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+uint16_t adc_inp;
+RTC_DateTypeDef sdatestructureget;
+RTC_TimeTypeDef stimestructureget;
+
+extern uint8_t led_blink_en;
+extern uint8_t Notification_Status;
 
 /* USER CODE END 0 */
 
@@ -117,6 +125,10 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  uint32_t tick,tick_now = 0;
+  tick = 0;
+
   printf_remapping_init();
 
   char args[3][64];
@@ -180,6 +192,43 @@ int main(void)
       }
 
     }
+
+
+
+
+    tick_now = HAL_GetTick();
+    if(tick_now >= tick)
+    {
+      tick = tick_now + 500;
+
+      uint8_t text[30];
+      static uint8_t Seconds_o;
+      int text_lenth;
+
+      /* Get the RTC current Time */
+      HAL_RTC_GetTime(&hrtc, &stimestructureget, RTC_FORMAT_BIN);
+      /* Get the RTC current Date */
+      HAL_RTC_GetDate(&hrtc, &sdatestructureget, RTC_FORMAT_BIN);
+
+      if(Seconds_o != stimestructureget.Seconds)
+      {
+        Seconds_o = stimestructureget.Seconds;
+
+        if(led_blink_en)
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4,GPIO_PIN_SET);
+
+        text_lenth = sprintf((char *) &text,"20%02d.%02d.%02d %02d:%02d %02d ,%d",sdatestructureget.Year,sdatestructureget.Month,sdatestructureget.Date,  stimestructureget.Hours,stimestructureget.Minutes,stimestructureget.Seconds,adc_inp);
+
+        printf("%s\n", text);
+
+        if(Notification_Status) P2PS_STM_App_Update_Char(P2P_NOTIFY_CHAR_UUID, text);
+      }
+      else
+      {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4,GPIO_PIN_RESET);
+      }
+    }
+
 
 
 
