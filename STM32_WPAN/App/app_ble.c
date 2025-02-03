@@ -164,6 +164,8 @@ typedef struct
   uint8_t SwitchOffGPIO_timer_Id;
   /* USER CODE BEGIN PTD_1*/
 
+  uint8_t periodically_1s_timer_Id;
+
   /* USER CODE END PTD_1 */
 }BleApplicationContext_t;
 
@@ -179,6 +181,8 @@ typedef struct
 #define BD_ADDR_SIZE_LOCAL    6
 
 /* USER CODE BEGIN PD */
+
+#define PERIODIC_TIMER_TIMEOUT            (3*1000*1000/CFG_TS_TICK_VAL) /**< 60s */
 
 /* USER CODE END PD */
 
@@ -372,6 +376,8 @@ static void Connection_Interval_Update_Req(void);
 
 /* USER CODE BEGIN PFP */
 
+static void Periodically_call_Callback(void);
+
 /* USER CODE END PFP */
 
 /* External variables --------------------------------------------------------*/
@@ -536,6 +542,10 @@ void APP_BLE_Init(void)
   Adv_Request(APP_BLE_FAST_ADV);
 
   /* USER CODE BEGIN APP_BLE_Init_2 */
+
+  HW_TS_Create(CFG_TIM_PROC_ID_ISR, &(BleApplicationContext.periodically_1s_timer_Id), hw_ts_Repeated, Periodically_call_Callback);
+
+  HW_TS_Start(BleApplicationContext.periodically_1s_timer_Id, PERIODIC_TIMER_TIMEOUT);
 
   /* USER CODE END APP_BLE_Init_2 */
 
@@ -1223,6 +1233,13 @@ const uint8_t* BleGetBdAddress(void)
 }
 
 /* USER CODE BEGIN FD_LOCAL_FUNCTION */
+
+static void Periodically_call_Callback(void)
+{
+  static uint32_t cnts = 0;
+  cnts++;
+  APP_DBG_MSG("Periodically_call_Callback - %d\n", cnts);
+}
 
 /* USER CODE END FD_LOCAL_FUNCTION */
 

@@ -32,6 +32,8 @@ void printf_mapping(int ch)
   wts_Queue_enqueue(&cli_buffer_queue_object, (uint8_t*)&ch);
 }
 
+
+char printf_line_with_timestamp_buffer[32];
 const uint8_t cr_char = '\r';
 int __io_putchar(int ch)
 {
@@ -40,9 +42,17 @@ int __io_putchar(int ch)
   if(ch == '\n')
   {
     printf_mapping(cr_char);
-  }
+    printf_mapping(ch);
 
-  printf_mapping(ch);
+    snprintf(printf_line_with_timestamp_buffer, sizeof(printf_line_with_timestamp_buffer), "%05ld: ", HAL_GetTick()%100000);
+    for (char *p = printf_line_with_timestamp_buffer; *p != '\0'; p++) {
+      printf_mapping(*p);
+    }
+  }
+  else
+  {
+    printf_mapping(ch);
+  }
 
   return ch;
 }
@@ -243,7 +253,7 @@ void printf_remapping_process()
 
 
 
-  if(printf_remapping_process_interval_tickstore + 10 <= HAL_GetTick())
+  if(printf_remapping_process_interval_tickstore + 1 <= HAL_GetTick())
   {
     printf_remapping_process_interval_tickstore = HAL_GetTick();
 
